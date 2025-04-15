@@ -1,9 +1,9 @@
-// app/Auth/SignIn.tsx
+// app/(auth)/SignIn.tsx
 
 import React, { useState } from 'react'
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
-import { supabase } from '../../lib/supabase'
+import { supabase } from '../../src/lib/supabase'
 
 export default function SignInScreen() {
   const router = useRouter()
@@ -68,7 +68,7 @@ export default function SignInScreen() {
         disabled={loading}
       />
 
-      <Text style={styles.link} onPress={() => router.push('/Auth/SignUp')}>
+      <Text style={styles.link} onPress={() => router.push('/(auth)/SignUp')}>
         Don't have an account? Sign Up
       </Text>
     </View>

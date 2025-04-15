@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
-import { supabase } from '../../lib/supabase'
+import { supabase } from '../../src/lib/supabase'
 
 export default function SignUpScreen() {
   const router = useRouter()
@@ -28,7 +28,7 @@ export default function SignUpScreen() {
         Alert.alert('Sign Up Error', error.message)
       } else if (data.session) {
         Alert.alert('Success', 'Check your email to confirm your account.')
-        router.replace('/Auth/SignIn')
+        router.replace('/(auth)/SignIn')
       }
     } catch (error) {
       Alert.alert('Error', 'An unexpected error occurred. Please try again.')
@@ -68,7 +68,7 @@ export default function SignUpScreen() {
         disabled={loading}
       />
 
-      <Text style={styles.link} onPress={() => router.push('/Auth/SignIn')}>
+      <Text style={styles.link} onPress={() => router.push('/(auth)/SignIn')}>
         Already have an account? Sign In
       </Text>
     </View>

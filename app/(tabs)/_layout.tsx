@@ -13,18 +13,46 @@ export default function TabLayout() {
 
   return (
     <Tabs
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ color, size }) => {
-          return <FontAwesome name="home" size={size} color={color} />;
-        },
+      screenOptions={{
+        headerShown: true,
         tabBarActiveTintColor: '#007AFF',
         tabBarInactiveTintColor: 'gray',
-      })}
+      }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="home" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="emotional"
+        options={{
+          title: 'Emotional',
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="heart" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="visualisation"
+        options={{
+          title: 'Visualisation',
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="eye" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="account"
+        options={{
+          title: 'Account',
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="user" size={size} color={color} />
+          ),
         }}
       />
     </Tabs>
