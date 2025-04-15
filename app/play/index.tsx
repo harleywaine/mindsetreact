@@ -51,47 +51,38 @@ export default function PlayScreen() {
 
   useEffect(() => {
     const getUserAndLoad = async () => {
-      const { data, error } = await supabase.auth.getUser()
-      if (data?.user?.id) {
-        setUserId(data.user.id)
-        console.log('User authenticated:', data.user.id)
-        
-        // Test access to lesson_progress table
-        const { data: testData, error: testError } = await supabase
-          .from('lesson_progress')
-          .select('*')
-          .limit(1)
-        
-        console.log('Test access to lesson_progress table:', testData, testError)
-      } else {
-        console.error('User not authenticated:', error)
+      try {
+        const { data, error } = await supabase.auth.getUser()
+        if (data?.user?.id) {
+          setUserId(data.user.id)
+          console.log('User authenticated:', data.user.id)
+          
+          // Test access to lesson_progress table
+          const { data: testData, error: testError } = await supabase
+            .from('lesson_progress')
+            .select('*')
+            .limit(1)
+          
+          console.log('Test access to lesson_progress table:', testData, testError)
+        } else {
+          console.error('User not authenticated:', error)
+          // Try to refresh the session
+          const { data: sessionData, error: sessionError } = await supabase.auth.refreshSession()
+          if (sessionData?.user?.id) {
+            setUserId(sessionData.user.id)
+            console.log('User authenticated after refresh:', sessionData.user.id)
+          } else {
+            console.error('Failed to refresh session:', sessionError)
+          }
+        }
+      } catch (e) {
+        console.error('Error getting user:', e)
       }
       await loadAudio()
     }
 
     getUserAndLoad()
   }, [uuid])
-
-  useEffect(() => {
-    const testUpsert = async () => {
-      if (userId && typeof uuid === 'string') {
-        console.log('Testing upsert operation directly')
-        try {
-          const { data, error } = await supabase.from('lesson_progress').upsert({
-            user_id: userId,
-            audio_file_id: uuid,
-            completed: true,
-          })
-          
-          console.log('Direct upsert test result:', data, error)
-        } catch (e) {
-          console.error('Exception during direct upsert test:', e)
-        }
-      }
-    }
-    
-    testUpsert()
-  }, [userId, uuid])
 
   const loadAudio = async () => {
     try {
@@ -184,12 +175,26 @@ export default function PlayScreen() {
         console.log('User ID:', userId)
         console.log('Audio File ID (UUID):', uuid)
         
-        if (userId && typeof uuid === 'string') {
+        // If userId is null, try to get it again
+        let currentUserId = userId
+        if (!currentUserId) {
+          console.log('User ID is null, attempting to retrieve it again')
+          const { data, error } = await supabase.auth.getUser()
+          if (data?.user?.id) {
+            currentUserId = data.user.id
+            setUserId(currentUserId)
+            console.log('Retrieved user ID:', currentUserId)
+          } else {
+            console.error('Failed to retrieve user ID:', error)
+          }
+        }
+        
+        if (currentUserId && typeof uuid === 'string') {
           console.log('Both userId and uuid are valid, proceeding with upsert')
           
           try {
             const { data, error } = await supabase.from('lesson_progress').upsert({
-              user_id: userId,
+              user_id: currentUserId,
               audio_file_id: uuid,
               completed: true,
             })
@@ -207,7 +212,7 @@ export default function PlayScreen() {
           }
         } else {
           console.error('Missing required data for marking lesson complete:')
-          console.error('userId is valid:', !!userId)
+          console.error('userId is valid:', !!currentUserId)
           console.error('uuid is valid string:', typeof uuid === 'string')
         }
       }
