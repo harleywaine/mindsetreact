@@ -7,11 +7,18 @@ import { Link } from 'expo-router';
 type LessonCardProps = {
   title: string;
   duration: string;
+  uuid: string;
 };
 
-export function LessonCard({ title, duration }: LessonCardProps) {
+export function LessonCard({ title, duration, uuid }: LessonCardProps) {
   return (
-    <Link href="../play" asChild>
+    <Link
+      href={{
+        pathname: '/play',
+        params: { uuid },
+      }}
+      asChild
+    >
       <Pressable style={styles.container}>
         <View style={styles.innerContainer}>
           <View style={styles.iconContainer}>
@@ -33,7 +40,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.card,
     borderRadius: 12,
     padding: 16,
-    marginBottom: 8,
   },
   innerContainer: {
     flexDirection: 'row',
@@ -62,4 +68,4 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.tiny,
     color: colors.text.secondary,
   },
-}); 
+});
