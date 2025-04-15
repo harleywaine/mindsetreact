@@ -1,34 +1,63 @@
-import { View, Text, StyleSheet, Button } from 'react-native'
-import { useRouter } from 'expo-router'
-import { supabase } from '../../src/lib/supabase'
+import { View, Text, StyleSheet } from 'react-native';
+import { Container } from '../../src/components/Container';
+import { Button } from '../../src/components/Button';
+import { colors } from '../../src/theme/colors';
+import { typography } from '../../src/theme/typography';
+import { supabase } from '../../src/lib/supabase';
+import { useEffect, useState } from 'react';
 
 export default function AccountScreen() {
-  const router = useRouter()
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
-  const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (!error) {
-      router.replace('/(auth)/SignIn')
-    }
-  }
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUserEmail(user?.email ?? null);
+    };
+    getUser();
+  }, []);
 
   return (
-    <View style={styles.container}>
+    <Container>
       <Text style={styles.title}>Account</Text>
-      <Button title="Sign Out" onPress={handleSignOut} />
-    </View>
-  )
+
+      <View style={styles.userInfo}>
+        <Text style={styles.email}>{userEmail}</Text>
+      </View>
+
+      <View style={styles.buttonContainer}>
+        <Button 
+          title="My Account" 
+          onPress={() => {}} 
+          variant="secondary"
+        />
+        <Button 
+          title="Sign out" 
+          onPress={() => {}} 
+          variant="secondary"
+        />
+      </View>
+    </Container>
+  );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20,
+    fontFamily: typography.fonts.ubuntu.bold,
+    fontSize: typography.sizes.h1,
+    color: colors.text.primary,
+    marginBottom: 4,
+    paddingTop: 60,
   },
-}) 
+  userInfo: {
+    marginTop: 32,
+  },
+  email: {
+    fontFamily: typography.fonts.ubuntu.regular,
+    fontSize: typography.sizes.body,
+    color: colors.text.secondary,
+  },
+  buttonContainer: {
+    marginTop: 32,
+  },
+}); 
