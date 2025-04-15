@@ -7,11 +7,18 @@ import { Link } from 'expo-router';
 type MaintenanceCardProps = {
   title: string;
   duration: string;
+  uuid: string;
 };
 
-export function MaintenanceCard({ title, duration }: MaintenanceCardProps) {
+export function MaintenanceCard({ title, duration, uuid }: MaintenanceCardProps) {
   return (
-    <Link href="../play" asChild>
+    <Link 
+      href={{
+        pathname: '/play',
+        params: { uuid },
+      }}
+      asChild
+    >
       <Pressable style={styles.container}>
         <View style={styles.iconContainer}>
           <FontAwesome name="play" size={16} color={colors.text.primary} />

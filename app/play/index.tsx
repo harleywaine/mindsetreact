@@ -193,6 +193,22 @@ export default function PlayScreen() {
           console.log('Both userId and uuid are valid, proceeding with upsert')
           
           try {
+            // First check if the lesson is already marked as complete
+            const { data: existingData, error: checkError } = await supabase
+              .from('lesson_progress')
+              .select('completed')
+              .eq('user_id', currentUserId)
+              .eq('audio_file_id', uuid)
+              .single()
+            
+            if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+              console.error('Error checking lesson status:', checkError)
+            } else if (existingData?.completed) {
+              console.log('✅ Lesson already marked as complete in Supabase')
+              return
+            }
+            
+            // If not already complete, mark it as complete
             const { data, error } = await supabase.from('lesson_progress').upsert({
               user_id: currentUserId,
               audio_file_id: uuid,
@@ -202,8 +218,13 @@ export default function PlayScreen() {
             console.log('Upsert response data:', data)
             
             if (error) {
-              console.error('Error marking lesson complete:', error)
-              console.error('Error details:', JSON.stringify(error))
+              // Check if it's a duplicate key error
+              if (error.code === '23505') {
+                console.log('✅ Lesson already marked as complete in Supabase (duplicate key)')
+              } else {
+                console.error('Error marking lesson complete:', error)
+                console.error('Error details:', JSON.stringify(error))
+              }
             } else {
               console.log('✅ Lesson marked as complete in Supabase')
             }

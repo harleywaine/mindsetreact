@@ -5,9 +5,11 @@ import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { supabase } from '../../src/lib/supabase';
 import { useEffect, useState } from 'react';
+import { router } from 'expo-router';
 
 export default function AccountScreen() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
     const getUser = async () => {
@@ -16,6 +18,25 @@ export default function AccountScreen() {
     };
     getUser();
   }, []);
+
+  const handleSignOut = async () => {
+    try {
+      setIsSigningOut(true);
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Error signing out:', error.message);
+        return;
+      }
+      
+      // Redirect to sign in screen
+      router.replace('/(auth)/SignIn');
+    } catch (error) {
+      console.error('Unexpected error during sign out:', error);
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
 
   return (
     <Container>
@@ -32,8 +53,8 @@ export default function AccountScreen() {
           variant="secondary"
         />
         <Button 
-          title="Sign out" 
-          onPress={() => {}} 
+          title={isSigningOut ? "Signing out..." : "Sign out"} 
+          onPress={handleSignOut} 
           variant="secondary"
         />
       </View>

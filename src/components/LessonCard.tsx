@@ -8,9 +8,10 @@ type LessonCardProps = {
   title: string;
   duration: string;
   uuid: string;
+  completed?: boolean; // 👈 New prop to indicate progress
 };
 
-export function LessonCard({ title, duration, uuid }: LessonCardProps) {
+export function LessonCard({ title, duration, uuid, completed = false }: LessonCardProps) {
   return (
     <Link
       href={{
@@ -28,7 +29,13 @@ export function LessonCard({ title, duration, uuid }: LessonCardProps) {
             <Text style={styles.title}>{title}</Text>
             <Text style={styles.duration}>{duration}</Text>
           </View>
-          <FontAwesome name="chevron-right" size={16} color={colors.text.secondary} />
+
+          {/* ✅ Completion Indicator */}
+          <FontAwesome
+            name={completed ? 'check-circle' : 'circle-thin'}
+            size={18}
+            color={completed ? 'green' : colors.text.secondary}
+          />
         </View>
       </Pressable>
     </Link>
@@ -40,6 +47,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.card,
     borderRadius: 12,
     padding: 16,
+    marginBottom: 8,
   },
   innerContainer: {
     flexDirection: 'row',
