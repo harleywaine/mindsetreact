@@ -1,9 +1,10 @@
-import { Text, StyleSheet, View } from 'react-native'
+import { Text, StyleSheet, View, Pressable } from 'react-native'
 import { Container } from '../../src/components/Container'
 import { colors } from '../../src/theme/colors'
 import { typography } from '../../src/theme/typography'
 import { CircularButton } from '../../src/components/CircularButton'
 import { LessonCard } from '../../src/components/LessonCard'
+import { Link } from 'expo-router'
 
 export default function HomeScreen() {
   return (
@@ -14,27 +15,45 @@ export default function HomeScreen() {
       <Text style={styles.sectionTitle}>Flick the switch</Text>
       <View style={styles.buttonContainer}>
         <View style={styles.buttonWrapper}>
-          <CircularButton 
-            iconName="bolt" 
-            onPress={() => {}} 
-            size={24}
-          />
+          <Link href={{
+            pathname: "../play",
+            params: { uuid: "91fe8075-69fe-4300-be53-2e32a0c7def4" }
+          }} asChild>
+            <Pressable>
+              <CircularButton 
+                iconName="bolt" 
+                size={24}
+              />
+            </Pressable>
+          </Link>
           <Text style={styles.buttonLabel}>Switch On</Text>
         </View>
         <View style={styles.buttonWrapper}>
-          <CircularButton 
-            iconName="battery-full" 
-            onPress={() => {}} 
-            size={24}
-          />
+          <Link href={{
+            pathname: "../play",
+            params: { uuid: "a2b4c6d8-e0f2-4444-8888-1234567890ab" }
+          }} asChild>
+            <Pressable>
+              <CircularButton 
+                iconName="battery-full" 
+                size={24}
+              />
+            </Pressable>
+          </Link>
           <Text style={styles.buttonLabel}>Switch Off</Text>
         </View>
         <View style={styles.buttonWrapper}>
-          <CircularButton 
-            iconName="shield" 
-            onPress={() => {}} 
-            size={24}
-          />
+          <Link href={{
+            pathname: "../play",
+            params: { uuid: "f9e8d7c6-b5a4-3333-7777-9876543210cd" }
+          }} asChild>
+            <Pressable>
+              <CircularButton 
+                iconName="shield" 
+                size={24}
+              />
+            </Pressable>
+          </Link>
           <Text style={styles.buttonLabel}>Take Control</Text>
         </View>
       </View>

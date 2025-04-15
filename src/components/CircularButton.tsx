@@ -4,13 +4,13 @@ import { colors } from '../theme/colors';
 
 type CircularButtonProps = {
   iconName: keyof typeof FontAwesome.glyphMap;
-  onPress: () => void;
+  onPress?: () => void;
   size?: number;
 };
 
 export function CircularButton({ iconName, onPress, size = 24 }: CircularButtonProps) {
   return (
-    <TouchableOpacity style={styles.button} onPress={onPress}>
+    <TouchableOpacity style={styles.button} onPress={onPress} disabled={!onPress}>
       <FontAwesome name={iconName} size={size} color={colors.text.primary} />
     </TouchableOpacity>
   );
