@@ -19,8 +19,8 @@ export default function PlayScreen() {
   const [duration, setDuration] = useState(0)
   const [position, setPosition] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
 
-  // Cleanup function to stop and unload audio
   const cleanup = useCallback(async () => {
     if (sound) {
       try {
@@ -37,18 +37,61 @@ export default function PlayScreen() {
     }
   }, [sound])
 
-  // Handle hardware back button
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       cleanup()
-      return false // Let the default back action proceed
+      return false
     })
 
     return () => {
       backHandler.remove()
-      cleanup() // Clean up when component unmounts
+      cleanup()
     }
   }, [cleanup])
+
+  useEffect(() => {
+    const getUserAndLoad = async () => {
+      const { data, error } = await supabase.auth.getUser()
+      if (data?.user?.id) {
+        setUserId(data.user.id)
+        console.log('User authenticated:', data.user.id)
+        
+        // Test access to lesson_progress table
+        const { data: testData, error: testError } = await supabase
+          .from('lesson_progress')
+          .select('*')
+          .limit(1)
+        
+        console.log('Test access to lesson_progress table:', testData, testError)
+      } else {
+        console.error('User not authenticated:', error)
+      }
+      await loadAudio()
+    }
+
+    getUserAndLoad()
+  }, [uuid])
+
+  useEffect(() => {
+    const testUpsert = async () => {
+      if (userId && typeof uuid === 'string') {
+        console.log('Testing upsert operation directly')
+        try {
+          const { data, error } = await supabase.from('lesson_progress').upsert({
+            user_id: userId,
+            audio_file_id: uuid,
+            completed: true,
+          })
+          
+          console.log('Direct upsert test result:', data, error)
+        } catch (e) {
+          console.error('Exception during direct upsert test:', e)
+        }
+      }
+    }
+    
+    testUpsert()
+  }, [userId, uuid])
 
   const loadAudio = async () => {
     try {
@@ -78,10 +121,8 @@ export default function PlayScreen() {
       console.log('Audio URL:', publicUrl)
       setTitle(audioFile.title || 'Audio Session')
 
-      // Clean up any existing audio before loading new one
       await cleanup()
 
-      // Configure audio mode
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
         staysActiveInBackground: true,
@@ -93,7 +134,7 @@ export default function PlayScreen() {
       console.log('Creating new sound object')
       const { sound: audioSound } = await Audio.Sound.createAsync(
         { uri: publicUrl },
-        { 
+        {
           shouldPlay: false,
           progressUpdateIntervalMillis: 1000,
           positionMillis: 0,
@@ -110,7 +151,7 @@ export default function PlayScreen() {
 
       const status = await audioSound.getStatusAsync()
       console.log('Initial sound status:', status)
-      
+
       if (status.isLoaded) {
         setDuration(status.durationMillis || 0)
         setPosition(status.positionMillis || 0)
@@ -127,14 +168,48 @@ export default function PlayScreen() {
     }
   }
 
-  const onPlaybackStatusUpdate = (status: any) => {
+  const onPlaybackStatusUpdate = async (status: any) => {
     console.log('Playback status:', status)
+
     if (status.isLoaded) {
       setPosition(status.positionMillis)
       setIsPlaying(status.isPlaying)
+
       if (status.didJustFinish) {
+        console.log('Audio playback just finished')
         setIsPlaying(false)
         sound?.setPositionAsync(0)
+
+        console.log('Attempting to mark lesson as complete')
+        console.log('User ID:', userId)
+        console.log('Audio File ID (UUID):', uuid)
+        
+        if (userId && typeof uuid === 'string') {
+          console.log('Both userId and uuid are valid, proceeding with upsert')
+          
+          try {
+            const { data, error } = await supabase.from('lesson_progress').upsert({
+              user_id: userId,
+              audio_file_id: uuid,
+              completed: true,
+            })
+            
+            console.log('Upsert response data:', data)
+            
+            if (error) {
+              console.error('Error marking lesson complete:', error)
+              console.error('Error details:', JSON.stringify(error))
+            } else {
+              console.log('✅ Lesson marked as complete in Supabase')
+            }
+          } catch (e) {
+            console.error('Exception during upsert:', e)
+          }
+        } else {
+          console.error('Missing required data for marking lesson complete:')
+          console.error('userId is valid:', !!userId)
+          console.error('uuid is valid string:', typeof uuid === 'string')
+        }
       }
     } else if (status.error) {
       console.error('Playback error:', status.error)
@@ -203,11 +278,6 @@ export default function PlayScreen() {
   }
 
   const progress = duration > 0 ? (position / duration) * 100 : 0
-
-  // Load audio when the component mounts or UUID changes
-  useEffect(() => {
-    loadAudio()
-  }, [uuid])
 
   const handleBackPress = async () => {
     await cleanup()
