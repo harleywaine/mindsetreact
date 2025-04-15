@@ -1,14 +1,16 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, BackHandler } from 'react-native'
 import { Container } from '../../src/components/Container'
 import { colors } from '../../src/theme/colors'
 import { typography } from '../../src/theme/typography'
 import { FontAwesome } from '@expo/vector-icons'
-import { Link, useLocalSearchParams } from 'expo-router'
+import { Link, useLocalSearchParams, useRouter } from 'expo-router'
 import { Audio } from 'expo-av'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
+import * as React from 'react'
 
 export default function PlayScreen() {
+  const router = useRouter()
   const { uuid } = useLocalSearchParams()
   const [sound, setSound] = useState<Audio.Sound | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -18,14 +20,35 @@ export default function PlayScreen() {
   const [position, setPosition] = useState(0)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadAudio()
-    return () => {
-      if (sound) {
-        sound.unloadAsync()
+  // Cleanup function to stop and unload audio
+  const cleanup = useCallback(async () => {
+    if (sound) {
+      try {
+        const status = await sound.getStatusAsync()
+        if (status.isLoaded) {
+          if (status.isPlaying) {
+            await sound.stopAsync()
+          }
+          await sound.unloadAsync()
+        }
+      } catch (error) {
+        console.error('Error cleaning up audio:', error)
       }
     }
-  }, [uuid])
+  }, [sound])
+
+  // Handle hardware back button
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      cleanup()
+      return false // Let the default back action proceed
+    })
+
+    return () => {
+      backHandler.remove()
+      cleanup() // Clean up when component unmounts
+    }
+  }, [cleanup])
 
   const loadAudio = async () => {
     try {
@@ -52,8 +75,13 @@ export default function PlayScreen() {
       }
 
       const publicUrl = audioFile.url
+      console.log('Audio URL:', publicUrl)
       setTitle(audioFile.title || 'Audio Session')
 
+      // Clean up any existing audio before loading new one
+      await cleanup()
+
+      // Configure audio mode
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
         staysActiveInBackground: true,
@@ -62,21 +90,33 @@ export default function PlayScreen() {
         playThroughEarpieceAndroid: false,
       })
 
+      console.log('Creating new sound object')
       const { sound: audioSound } = await Audio.Sound.createAsync(
         { uri: publicUrl },
-        {
+        { 
           shouldPlay: false,
           progressUpdateIntervalMillis: 1000,
+          positionMillis: 0,
+          rate: 1.0,
+          shouldCorrectPitch: true,
+          volume: 1.0,
+          isMuted: false,
         },
         onPlaybackStatusUpdate
       )
 
+      console.log('Sound object created')
       setSound(audioSound)
 
       const status = await audioSound.getStatusAsync()
+      console.log('Initial sound status:', status)
+      
       if (status.isLoaded) {
         setDuration(status.durationMillis || 0)
         setPosition(status.positionMillis || 0)
+      } else {
+        console.error('Sound not loaded properly:', status)
+        setError('Failed to load audio properly')
       }
 
     } catch (error) {
@@ -88,6 +128,7 @@ export default function PlayScreen() {
   }
 
   const onPlaybackStatusUpdate = (status: any) => {
+    console.log('Playback status:', status)
     if (status.isLoaded) {
       setPosition(status.positionMillis)
       setIsPlaying(status.isPlaying)
@@ -95,18 +136,39 @@ export default function PlayScreen() {
         setIsPlaying(false)
         sound?.setPositionAsync(0)
       }
+    } else if (status.error) {
+      console.error('Playback error:', status.error)
+      setError('Playback error occurred')
     }
   }
 
   const togglePlayback = async () => {
-    if (!sound) return
+    if (!sound) {
+      console.error('No sound object available')
+      return
+    }
+
     try {
-      if (isPlaying) {
-        await sound.pauseAsync()
-      } else {
-        await sound.playAsync()
+      const status = await sound.getStatusAsync()
+      console.log('Current status before toggle:', status)
+
+      if (!status.isLoaded) {
+        console.error('Sound not loaded properly')
+        return
       }
-      setIsPlaying(!isPlaying)
+
+      if (status.isPlaying) {
+        console.log('Attempting to pause')
+        await sound.pauseAsync()
+        setIsPlaying(false)
+      } else {
+        console.log('Attempting to play')
+        await sound.playAsync()
+        setIsPlaying(true)
+      }
+
+      const newStatus = await sound.getStatusAsync()
+      console.log('Status after toggle:', newStatus)
     } catch (error) {
       console.error('Playback toggle error:', error)
       setError('Failed to play/pause audio')
@@ -142,12 +204,22 @@ export default function PlayScreen() {
 
   const progress = duration > 0 ? (position / duration) * 100 : 0
 
+  // Load audio when the component mounts or UUID changes
+  useEffect(() => {
+    loadAudio()
+  }, [uuid])
+
+  const handleBackPress = async () => {
+    await cleanup()
+    router.back()
+  }
+
   return (
     <Container>
       <View style={styles.header}>
-        <Link href=".." style={styles.backButton}>
+        <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
           <FontAwesome name="chevron-left" size={24} color={colors.text.primary} />
-        </Link>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
@@ -179,15 +251,15 @@ export default function PlayScreen() {
           ) : error ? (
             <Text style={styles.errorText}>{error}</Text>
           ) : (
-            <TouchableOpacity
-              style={styles.playButton}
+            <TouchableOpacity 
+              style={styles.playButton} 
               onPress={togglePlayback}
               disabled={!sound}
             >
-              <FontAwesome
-                name={isPlaying ? 'pause' : 'play'}
-                size={32}
-                color={colors.text.primary}
+              <FontAwesome 
+                name={isPlaying ? 'pause' : 'play'} 
+                size={32} 
+                color={colors.text.primary} 
               />
             </TouchableOpacity>
           )}
