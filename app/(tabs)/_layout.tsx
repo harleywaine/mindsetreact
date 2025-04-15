@@ -3,6 +3,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { Platform } from 'react-native';
 import { useEffect } from 'react';
 import * as Font from 'expo-font';
+import { colors } from '../../src/theme/colors';
 
 export default function TabLayout() {
   useEffect(() => {
@@ -14,9 +15,13 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: true,
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: 'gray',
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: colors.background.dark,
+          borderTopColor: colors.border,
+        },
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.text.secondary,
       }}
     >
       <Tabs.Screen
