@@ -22,17 +22,14 @@ export default function EmotionalScreen() {
           <MaintenanceCard
             title="Short Session"
             duration="5 Minutes"
-            onPress={() => {}}
           />
           <MaintenanceCard
             title="Medium Session"
             duration="10 Minutes"
-            onPress={() => {}}
           />
           <MaintenanceCard
             title="Long Session"
             duration="15 Minutes"
-            onPress={() => {}}
           />
         </ScrollView>
       </View>
@@ -43,22 +40,18 @@ export default function EmotionalScreen() {
           <LessonCard
             title="Introduction"
             duration="20 Minutes"
-            onPress={() => {}}
           />
           <LessonCard
             title="Lesson 1"
             duration="20 Minutes"
-            onPress={() => {}}
           />
           <LessonCard
             title="Lesson 2"
             duration="20 Minutes"
-            onPress={() => {}}
           />
           <LessonCard
             title="Lesson 3"
             duration="20 Minutes"
-            onPress={() => {}}
           />
         </View>
       </View>

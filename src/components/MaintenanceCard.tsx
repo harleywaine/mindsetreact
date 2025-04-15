@@ -1,36 +1,38 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
+import { Link } from 'expo-router';
 
 type MaintenanceCardProps = {
   title: string;
   duration: string;
-  onPress: () => void;
 };
 
-export function MaintenanceCard({ title, duration, onPress }: MaintenanceCardProps) {
+export function MaintenanceCard({ title, duration }: MaintenanceCardProps) {
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
-      <View style={styles.iconContainer}>
-        <FontAwesome name="play" size={16} color={colors.text.primary} />
-      </View>
-      <View style={styles.content}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.duration}>{duration}</Text>
-      </View>
-    </TouchableOpacity>
+    <Link href="../play" asChild>
+      <Pressable style={styles.container}>
+        <View style={styles.iconContainer}>
+          <FontAwesome name="play" size={16} color={colors.text.primary} />
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.duration}>{duration}</Text>
+        </View>
+      </Pressable>
+    </Link>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    width: 160, // fixed width instead of percentage
+    width: 160,
     backgroundColor: colors.background.card,
     borderRadius: 12,
     padding: 16,
-    height: 120, // taller than regular lesson card
-    marginRight: 12, // add margin for horizontal scrolling
+    height: 120,
+    marginRight: 12,
   },
   iconContainer: {
     width: 32,

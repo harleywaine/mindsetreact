@@ -1,37 +1,43 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
+import { Link } from 'expo-router';
 
 type LessonCardProps = {
   title: string;
   duration: string;
-  onPress: () => void;
 };
 
-export function LessonCard({ title, duration, onPress }: LessonCardProps) {
+export function LessonCard({ title, duration }: LessonCardProps) {
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
-      <View style={styles.iconContainer}>
-        <FontAwesome name="play" size={16} color={colors.text.primary} />
-      </View>
-      <View style={styles.content}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.duration}>{duration}</Text>
-      </View>
-      <FontAwesome name="chevron-right" size={16} color={colors.text.secondary} />
-    </TouchableOpacity>
+    <Link href="../play" asChild>
+      <Pressable style={styles.container}>
+        <View style={styles.innerContainer}>
+          <View style={styles.iconContainer}>
+            <FontAwesome name="play" size={16} color={colors.text.primary} />
+          </View>
+          <View style={styles.content}>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.duration}>{duration}</Text>
+          </View>
+          <FontAwesome name="chevron-right" size={16} color={colors.text.secondary} />
+        </View>
+      </Pressable>
+    </Link>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: colors.background.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,
+  },
+  innerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   iconContainer: {
     width: 32,

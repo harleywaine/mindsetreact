@@ -44,22 +44,18 @@ export default function HomeScreen() {
         <LessonCard
           title="Visualise the Race"
           duration="20 Minutes"
-          onPress={() => {}}
         />
         <LessonCard
           title="Confident Behaviour"
           duration="20 Minutes"
-          onPress={() => {}}
         />
         <LessonCard
           title="Training Breakthroughs"
           duration="20 Minutes"
-          onPress={() => {}}
         />
         <LessonCard
           title="Overcoming Obstacles"
           duration="20 Minutes"
-          onPress={() => {}}
         />
       </View>
     </Container>
