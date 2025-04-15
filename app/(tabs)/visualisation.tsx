@@ -9,7 +9,9 @@ import { supabase } from '../../lib/supabase'
 
 export default function VisualisationScreen() {
   const [basicTrainingLessons, setBasicTrainingLessons] = useState<any[]>([])
+  const [maintenanceLessons, setMaintenanceLessons] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [maintenanceLoading, setMaintenanceLoading] = useState(true)
 
   useEffect(() => {
     const fetchBasicTraining = async () => {
@@ -39,7 +41,35 @@ export default function VisualisationScreen() {
       }
     }
 
+    const fetchMaintenance = async () => {
+      setMaintenanceLoading(true)
+
+      try {
+        // Fetch audio files for the maintenance module
+        const { data: audioFiles, error: audioErr } = await supabase
+          .from('audio_files')
+          .select('id, title, duration')
+          .eq('module_id', 'e66c41de-d434-4a06-8d3a-d188f83722fa')
+          .order('order')
+
+        console.log('Maintenance audio files data:', audioFiles, 'Error:', audioErr)
+
+        if (audioErr) {
+          console.error('Maintenance audio fetch error:', audioErr)
+          setMaintenanceLessons([])
+        } else {
+          setMaintenanceLessons(audioFiles || [])
+        }
+      } catch (error) {
+        console.error('Error fetching maintenance audio files:', error)
+        setMaintenanceLessons([])
+      } finally {
+        setMaintenanceLoading(false)
+      }
+    }
+
     fetchBasicTraining()
+    fetchMaintenance()
   }, [])
 
   const formatDuration = (seconds: number) => {
@@ -54,25 +84,25 @@ export default function VisualisationScreen() {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Maintenance</Text>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          style={styles.maintenanceScroll}
-          contentContainerStyle={styles.maintenanceContainer}
-        >
-          <MaintenanceCard
-            title="Short Session"
-            duration="5 Minutes"
-          />
-          <MaintenanceCard
-            title="Medium Session"
-            duration="10 Minutes"
-          />
-          <MaintenanceCard
-            title="Long Session"
-            duration="15 Minutes"
-          />
-        </ScrollView>
+        {maintenanceLoading ? (
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 20 }} />
+        ) : (
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            style={styles.maintenanceScroll}
+            contentContainerStyle={styles.maintenanceContainer}
+          >
+            {maintenanceLessons.map((lesson) => (
+              <MaintenanceCard
+                key={lesson.id}
+                title={lesson.title || 'Untitled'}
+                duration={formatDuration(lesson.duration)}
+                uuid={lesson.id}
+              />
+            ))}
+          </ScrollView>
+        )}
       </View>
 
       <View style={styles.section}>
