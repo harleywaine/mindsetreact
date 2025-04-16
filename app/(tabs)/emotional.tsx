@@ -116,7 +116,42 @@ export default function EmotionalScreen() {
   // Add focus effect to refetch completion status
   useFocusEffect(
     useCallback(() => {
-      fetchCompletionStatus()
+      // Don't show loading indicator when refetching on focus
+      const refetchData = async () => {
+        try {
+          // Step 1: Get current user
+          const { data: userData, error: userError } = await supabase.auth.getUser()
+          const userId = userData?.user?.id
+          if (!userId || userError) {
+            console.error('User not found or error:', userError)
+            return
+          }
+
+          // Step 2: Fetch audio files for the specific module
+          const { data: audioFiles, error: audioErr } = await supabase
+            .from('audio_files')
+            .select('id, title, duration')
+            .eq('module_id', 'ef2275ed-5350-4bf4-b11d-0de47233df90')
+            .order('order')
+
+          if (audioErr) {
+            console.error('Audio fetch error:', audioErr)
+            return
+          }
+
+          // Only update if we have new data
+          if (audioFiles && audioFiles.length > 0) {
+            setBasicTrainingLessons(audioFiles)
+          }
+
+          // Always fetch completion status
+          await fetchCompletionStatus()
+        } catch (error) {
+          console.error('Error refetching data:', error)
+        }
+      }
+
+      refetchData()
     }, [])
   )
 

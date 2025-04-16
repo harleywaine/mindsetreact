@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Text, StyleSheet, View, Pressable, ActivityIndicator, ScrollView } from 'react-native'
 import { Container } from '../../src/components/Container'
 import { colors } from '../../src/theme/colors'
@@ -7,61 +7,119 @@ import { CircularButton } from '../../src/components/CircularButton'
 import { LessonCard } from '../../src/components/LessonCard'
 import { Link } from 'expo-router'
 import { supabase } from '../../lib/supabase'
+import { useFocusEffect } from '@react-navigation/native'
 
 export default function HomeScreen() {
   const [foundationLessons, setFoundationLessons] = useState<any[]>([])
   const [completedLessonIds, setCompletedLessonIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchLessonsAndProgress = async () => {
-      setLoading(true)
-
-      try {
-        // Step 1: Get current user
-        const { data: userData, error: userError } = await supabase.auth.getUser()
-        const userId = userData?.user?.id
-        if (!userId || userError) {
-          console.error('User not found or error:', userError)
-          return
-        }
-
-        // Step 2: Fetch audio files for Foundations module
-        const { data: audioFiles, error: audioErr } = await supabase
-          .from('audio_files')
-          .select('id, title, duration')
-          .eq('module_id', 'e17bf023-2601-4981-9858-b792532469f6')
-          .order('order')
-
-        if (audioErr) {
-          console.error('Audio fetch error:', audioErr)
-          setFoundationLessons([])
-          return
-        }
-
-        // Step 3: Fetch completed lesson progress
-        const { data: progress, error: progressErr } = await supabase
-          .from('lesson_progress')
-          .select('audio_file_id')
-          .eq('user_id', userId)
-          .eq('completed', true)
-
-        if (progressErr) {
-          console.error('Progress fetch error:', progressErr)
-        }
-
-        const completedIds = progress?.map((p) => p.audio_file_id) || []
-
-        setFoundationLessons(audioFiles || [])
-        setCompletedLessonIds(completedIds)
-      } catch (err) {
-        console.error('Error loading data:', err)
-        setFoundationLessons([])
-      } finally {
-        setLoading(false)
+  const fetchCompletionStatus = async () => {
+    try {
+      const { data: userData, error: userError } = await supabase.auth.getUser()
+      const userId = userData?.user?.id
+      if (!userId || userError) {
+        console.error('User not found or error:', userError)
+        return
       }
-    }
 
+      const { data: progress, error: progressErr } = await supabase
+        .from('lesson_progress')
+        .select('audio_file_id')
+        .eq('user_id', userId)
+        .eq('completed', true)
+
+      if (progressErr) {
+        console.error('Progress fetch error:', progressErr)
+        return
+      }
+
+      const completedIds = progress?.map((p) => p.audio_file_id) || []
+      console.log('Fetched completed lesson IDs:', completedIds)
+      setCompletedLessonIds(completedIds)
+    } catch (error) {
+      console.error('Error fetching completion status:', error)
+    }
+  }
+
+  const fetchLessonsAndProgress = async () => {
+    setLoading(true)
+
+    try {
+      // Step 1: Get current user
+      const { data: userData, error: userError } = await supabase.auth.getUser()
+      const userId = userData?.user?.id
+      if (!userId || userError) {
+        console.error('User not found or error:', userError)
+        return
+      }
+
+      // Step 2: Fetch audio files for Foundations module
+      const { data: audioFiles, error: audioErr } = await supabase
+        .from('audio_files')
+        .select('id, title, duration')
+        .eq('module_id', 'e17bf023-2601-4981-9858-b792532469f6')
+        .order('order')
+
+      if (audioErr) {
+        console.error('Audio fetch error:', audioErr)
+        setFoundationLessons([])
+        return
+      }
+
+      setFoundationLessons(audioFiles || [])
+      await fetchCompletionStatus()
+    } catch (err) {
+      console.error('Error loading data:', err)
+      setFoundationLessons([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Add focus effect to refetch completion status
+  useFocusEffect(
+    useCallback(() => {
+      // Don't show loading indicator when refetching on focus
+      const refetchData = async () => {
+        try {
+          // Step 1: Get current user
+          const { data: userData, error: userError } = await supabase.auth.getUser()
+          const userId = userData?.user?.id
+          if (!userId || userError) {
+            console.error('User not found or error:', userError)
+            return
+          }
+
+          // Step 2: Fetch audio files for Foundations module
+          const { data: audioFiles, error: audioErr } = await supabase
+            .from('audio_files')
+            .select('id, title, duration')
+            .eq('module_id', 'e17bf023-2601-4981-9858-b792532469f6')
+            .order('order')
+
+          if (audioErr) {
+            console.error('Audio fetch error:', audioErr)
+            return
+          }
+
+          // Only update if we have new data
+          if (audioFiles && audioFiles.length > 0) {
+            setFoundationLessons(audioFiles)
+          }
+
+          // Always fetch completion status
+          await fetchCompletionStatus()
+        } catch (err) {
+          console.error('Error refetching data:', err)
+        }
+      }
+
+      refetchData()
+    }, [])
+  )
+
+  useEffect(() => {
     fetchLessonsAndProgress()
   }, [])
 

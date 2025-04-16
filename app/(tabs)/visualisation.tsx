@@ -4,8 +4,9 @@ import { colors } from '../../src/theme/colors'
 import { typography } from '../../src/theme/typography'
 import { MaintenanceCard } from '../../src/components/MaintenanceCard'
 import { LessonCard } from '../../src/components/LessonCard'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useFocusEffect } from '@react-navigation/native'
 
 export default function VisualisationScreen() {
   const [basicTrainingLessons, setBasicTrainingLessons] = useState<any[]>([])
@@ -14,84 +15,141 @@ export default function VisualisationScreen() {
   const [loading, setLoading] = useState(true)
   const [maintenanceLoading, setMaintenanceLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchBasicTraining = async () => {
-      setLoading(true)
+  const fetchCompletionStatus = async () => {
+    try {
+      const { data: userData, error: userError } = await supabase.auth.getUser()
+      const userId = userData?.user?.id
+      if (!userId || userError) {
+        console.error('User not found or error:', userError)
+        return
+      }
 
-      try {
-        // Step 1: Get current user
-        const { data: userData, error: userError } = await supabase.auth.getUser()
-        const userId = userData?.user?.id
-        if (!userId || userError) {
-          console.error('User not found or error:', userError)
-          return
-        }
+      const { data: progress, error: progressErr } = await supabase
+        .from('lesson_progress')
+        .select('audio_file_id')
+        .eq('user_id', userId)
+        .eq('completed', true)
 
-        // Step 2: Fetch audio files for the specific module
-        const { data: audioFiles, error: audioErr } = await supabase
-          .from('audio_files')
-          .select('id, title, duration')
-          .eq('module_id', '5d99b98d-3593-4f34-be12-60f46ede0833')
-          .order('order')
+      if (progressErr) {
+        console.error('Progress fetch error:', progressErr)
+        return
+      }
 
-        console.log('Audio files data:', audioFiles, 'Error:', audioErr)
+      const completedIds = progress?.map((p) => p.audio_file_id) || []
+      console.log('Fetched completed lesson IDs:', completedIds)
+      setCompletedLessonIds(completedIds)
+    } catch (error) {
+      console.error('Error fetching completion status:', error)
+    }
+  }
 
-        if (audioErr) {
-          console.error('Audio fetch error:', audioErr)
-          setBasicTrainingLessons([])
-          return
-        }
+  const fetchBasicTraining = async () => {
+    setLoading(true)
 
-        // Step 3: Fetch completed lesson progress
-        const { data: progress, error: progressErr } = await supabase
-          .from('lesson_progress')
-          .select('audio_file_id')
-          .eq('user_id', userId)
-          .eq('completed', true)
+    try {
+      // Step 1: Get current user
+      const { data: userData, error: userError } = await supabase.auth.getUser()
+      const userId = userData?.user?.id
+      if (!userId || userError) {
+        console.error('User not found or error:', userError)
+        return
+      }
 
-        if (progressErr) {
-          console.error('Progress fetch error:', progressErr)
-        }
+      // Step 2: Fetch audio files for the specific module
+      const { data: audioFiles, error: audioErr } = await supabase
+        .from('audio_files')
+        .select('id, title, duration')
+        .eq('module_id', '5d99b98d-3593-4f34-be12-60f46ede0833')
+        .order('order')
 
-        const completedIds = progress?.map((p) => p.audio_file_id) || []
+      console.log('Audio files data:', audioFiles, 'Error:', audioErr)
 
-        setBasicTrainingLessons(audioFiles || [])
-        setCompletedLessonIds(completedIds)
-      } catch (error) {
-        console.error('Error fetching audio files:', error)
+      if (audioErr) {
+        console.error('Audio fetch error:', audioErr)
         setBasicTrainingLessons([])
-      } finally {
-        setLoading(false)
+        return
       }
+
+      setBasicTrainingLessons(audioFiles || [])
+      await fetchCompletionStatus()
+    } catch (error) {
+      console.error('Error fetching audio files:', error)
+      setBasicTrainingLessons([])
+    } finally {
+      setLoading(false)
     }
+  }
 
-    const fetchMaintenance = async () => {
-      setMaintenanceLoading(true)
+  const fetchMaintenance = async () => {
+    setMaintenanceLoading(true)
 
-      try {
-        // Fetch audio files for the maintenance module
-        const { data: audioFiles, error: audioErr } = await supabase
-          .from('audio_files')
-          .select('id, title, duration')
-          .eq('module_id', 'e66c41de-d434-4a06-8d3a-d188f83722fa')
-          .order('order')
+    try {
+      // Fetch audio files for the maintenance module
+      const { data: audioFiles, error: audioErr } = await supabase
+        .from('audio_files')
+        .select('id, title, duration')
+        .eq('module_id', 'e66c41de-d434-4a06-8d3a-d188f83722fa')
+        .order('order')
 
-        console.log('Maintenance audio files data:', audioFiles, 'Error:', audioErr)
+      console.log('Maintenance audio files data:', audioFiles, 'Error:', audioErr)
 
-        if (audioErr) {
-          console.error('Maintenance audio fetch error:', audioErr)
-          setMaintenanceLessons([])
-        } else {
-          setMaintenanceLessons(audioFiles || [])
-        }
-      } catch (error) {
-        console.error('Error fetching maintenance audio files:', error)
+      if (audioErr) {
+        console.error('Maintenance audio fetch error:', audioErr)
         setMaintenanceLessons([])
-      } finally {
-        setMaintenanceLoading(false)
+      } else {
+        setMaintenanceLessons(audioFiles || [])
       }
+    } catch (error) {
+      console.error('Error fetching maintenance audio files:', error)
+      setMaintenanceLessons([])
+    } finally {
+      setMaintenanceLoading(false)
     }
+  }
 
+  // Add focus effect to refetch completion status
+  useFocusEffect(
+    useCallback(() => {
+      // Don't show loading indicator when refetching on focus
+      const refetchData = async () => {
+        try {
+          // Step 1: Get current user
+          const { data: userData, error: userError } = await supabase.auth.getUser()
+          const userId = userData?.user?.id
+          if (!userId || userError) {
+            console.error('User not found or error:', userError)
+            return
+          }
+
+          // Step 2: Fetch audio files for the specific module
+          const { data: audioFiles, error: audioErr } = await supabase
+            .from('audio_files')
+            .select('id, title, duration')
+            .eq('module_id', '5d99b98d-3593-4f34-be12-60f46ede0833')
+            .order('order')
+
+          if (audioErr) {
+            console.error('Audio fetch error:', audioErr)
+            return
+          }
+
+          // Only update if we have new data
+          if (audioFiles && audioFiles.length > 0) {
+            setBasicTrainingLessons(audioFiles)
+          }
+
+          // Always fetch completion status
+          await fetchCompletionStatus()
+        } catch (error) {
+          console.error('Error refetching data:', error)
+        }
+      }
+
+      refetchData()
+    }, [])
+  )
+
+  useEffect(() => {
     fetchBasicTraining()
     fetchMaintenance()
   }, [])
