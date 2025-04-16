@@ -16,6 +16,7 @@ export default function PlayScreen() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [title, setTitle] = useState('Audio Session')
+  const [moduleTitle, setModuleTitle] = useState('')
   const [duration, setDuration] = useState(0)
   const [position, setPosition] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -96,9 +97,10 @@ export default function PlayScreen() {
 
       console.log('Loading audio file for ID:', uuid)
 
+      // First get the audio file info
       const { data: audioFile, error: audioError } = await supabase
         .from('audio_files')
-        .select('url, title')
+        .select('url, title, module_id')
         .eq('id', uuid)
         .single()
 
@@ -108,9 +110,22 @@ export default function PlayScreen() {
         return
       }
 
+      // Then get the module title
+      if (audioFile.module_id) {
+        const { data: moduleData, error: moduleError } = await supabase
+          .from('modules')
+          .select('title')
+          .eq('id', audioFile.module_id)
+          .single()
+
+        if (!moduleError && moduleData) {
+          setModuleTitle(moduleData.title)
+        }
+      }
+
       const publicUrl = audioFile.url
       console.log('Audio URL:', publicUrl)
-      setTitle(audioFile.title || 'Audio Session')
+      setTitle(audioFile.title)
 
       await cleanup()
 
@@ -313,9 +328,11 @@ export default function PlayScreen() {
   return (
     <Container>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-          <FontAwesome name="chevron-left" size={24} color={colors.text.primary} />
-        </TouchableOpacity>
+        <Link href="../" asChild>
+          <TouchableOpacity onPress={handleBackPress}>
+            <FontAwesome name="chevron-left" size={24} color={colors.text.primary} />
+          </TouchableOpacity>
+        </Link>
       </View>
 
       <View style={styles.content}>
@@ -325,7 +342,7 @@ export default function PlayScreen() {
 
         <View style={styles.sessionInfo}>
           <Text style={styles.title}>{title}</Text>
-          <Text style={styles.subtitle}>Emotional Control Training</Text>
+          <Text style={styles.subtitle}>{moduleTitle}</Text>
         </View>
 
         <View style={styles.progressContainer}>
