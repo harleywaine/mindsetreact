@@ -73,7 +73,7 @@ export default function HomeScreen() {
   return (
     <Container>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Welcome back, James</Text>
+        <Text style={styles.title}>Welcome back</Text>
         <Text style={styles.subtitle}>Let's make some progress</Text>
         
         <Text style={styles.sectionTitle}>Flick the switch</Text>
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.h1,
     color: colors.text.primary,
     marginBottom: 4,
-    paddingTop: 60,
+    paddingTop: 90,
   },
   subtitle: {
     fontFamily: typography.fonts.ubuntu.regular,
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   foundationsTitle: {
-    marginTop: 40,
+    marginTop: 60,
   },
   buttonContainer: {
     flexDirection: 'row',

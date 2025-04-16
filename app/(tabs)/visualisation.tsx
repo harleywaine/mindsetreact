@@ -31,7 +31,7 @@ export default function VisualisationScreen() {
         const { data: audioFiles, error: audioErr } = await supabase
           .from('audio_files')
           .select('id, title, duration')
-          .eq('module_id', 'ef2275ed-5350-4bf4-b11d-0de47233df90')
+          .eq('module_id', '5d99b98d-3593-4f34-be12-60f46ede0833')
           .order('order')
 
         console.log('Audio files data:', audioFiles, 'Error:', audioErr)
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.h1,
     color: colors.text.primary,
     marginBottom: 4,
-    paddingTop: 60,
+    paddingTop: 90,
   },
   subtitle: {
     fontFamily: typography.fonts.ubuntu.regular,
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
   },
   section: {
-    marginTop: 40,
+    marginTop: 60,
   },
   sectionTitle: {
     fontFamily: typography.fonts.ubuntu.medium,

@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { CheckCircle, Play } from 'phosphor-react-native';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { Link } from 'expo-router';
@@ -8,7 +9,7 @@ type LessonCardProps = {
   title: string;
   duration: string;
   uuid: string;
-  completed?: boolean; // 👈 New prop to indicate progress
+  completed?: boolean;
 };
 
 export function LessonCard({ title, duration, uuid, completed = false }: LessonCardProps) {
@@ -22,20 +23,32 @@ export function LessonCard({ title, duration, uuid, completed = false }: LessonC
     >
       <Pressable style={styles.container}>
         <View style={styles.innerContainer}>
-          <View style={styles.iconContainer}>
-            <FontAwesome name="play" size={16} color={colors.text.primary} />
+          <View style={styles.iconOuterContainer}>
+            <View style={styles.iconCircleContainer}>
+              <Play 
+                size={16} 
+                color="#FFFFFF" 
+                weight="fill" 
+                style={{ marginLeft: 0 }}
+              />
+            </View>
           </View>
           <View style={styles.content}>
-            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.title} numberOfLines={1}>{title}</Text>
             <Text style={styles.duration}>{duration}</Text>
           </View>
 
-          {/* ✅ Completion Indicator */}
-          <FontAwesome
-            name={completed ? 'check-circle' : 'circle-thin'}
-            size={18}
-            color={completed ? 'green' : colors.text.secondary}
-          />
+          {completed && (
+            <View style={styles.completedContainer}>
+              <View style={styles.checkContainer}>
+                <CheckCircle
+                  size={24}
+                  color="#FFFFFF"
+                  weight="regular"
+                />
+              </View>
+            </View>
+          )}
         </View>
       </Pressable>
     </Link>
@@ -44,36 +57,68 @@ export function LessonCard({ title, duration, uuid, completed = false }: LessonC
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.background.card,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
+    display: 'flex',
+    width: '100%',
+    padding: 12,
+    alignItems: 'flex-start',
+    gap: 2,
+    borderRadius: 8,
+    backgroundColor: '#333537',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 7,
+    elevation: 5, // for Android shadow
   },
   innerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
   },
-  iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.primary,
+  iconOuterContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 4,
+    backgroundColor: '#1D1D1D',
+    marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+  },
+  iconCircleContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#2B6D79',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     flex: 1,
+    marginRight: 12,
   },
   title: {
     fontFamily: typography.fonts.ubuntu.medium,
-    fontSize: typography.sizes.body,
-    color: colors.text.primary,
+    fontSize: 16,
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   duration: {
     fontFamily: typography.fonts.ubuntu.regular,
-    fontSize: typography.sizes.tiny,
-    color: colors.text.secondary,
+    fontSize: 14,
+    color: '#9CA3AF',
+  },
+  completedContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#2B6D79',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkContainer: {
+    padding: 2,
   },
 });

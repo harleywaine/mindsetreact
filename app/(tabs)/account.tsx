@@ -40,7 +40,7 @@ export default function AccountScreen() {
 
   return (
     <Container>
-      <Text style={styles.title}>Account</Text>
+      <Text style={styles.title}>Account Settings</Text>
 
       <View style={styles.userInfo}>
         <Text style={styles.email}>{userEmail}</Text>
@@ -68,10 +68,10 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.h1,
     color: colors.text.primary,
     marginBottom: 4,
-    paddingTop: 60,
+    paddingTop: 90,
   },
   userInfo: {
-    marginTop: 32,
+    marginTop: 48,
   },
   email: {
     fontFamily: typography.fonts.ubuntu.regular,
@@ -79,6 +79,6 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
   },
   buttonContainer: {
-    marginTop: 32,
+    marginTop: 48,
   },
 }); 

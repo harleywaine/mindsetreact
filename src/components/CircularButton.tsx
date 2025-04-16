@@ -18,9 +18,9 @@ export function CircularButton({ iconName, onPress, size = 24 }: CircularButtonP
 
 const styles = StyleSheet.create({
   button: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
@@ -32,5 +32,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    borderWidth: 10,
+    borderColor: '#333537',
   },
 }); 

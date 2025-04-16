@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { Play } from 'phosphor-react-native';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { Link } from 'expo-router';
@@ -20,8 +20,15 @@ export function MaintenanceCard({ title, duration, uuid }: MaintenanceCardProps)
       asChild
     >
       <Pressable style={styles.container}>
-        <View style={styles.iconContainer}>
-          <FontAwesome name="play" size={16} color={colors.text.primary} />
+        <View style={styles.iconOuterContainer}>
+          <View style={styles.iconCircleContainer}>
+            <Play 
+              size={16} 
+              color="#FFFFFF" 
+              weight="fill" 
+              style={{ marginLeft: 0 }}
+            />
+          </View>
         </View>
         <View style={styles.content}>
           <Text style={styles.title}>{title}</Text>
@@ -41,14 +48,22 @@ const styles = StyleSheet.create({
     height: 120,
     marginRight: 12,
   },
-  iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.primary,
+  iconOuterContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 4,
+    backgroundColor: '#1D1D1D',
+    marginBottom: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+  },
+  iconCircleContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#2B6D79',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     flex: 1,
