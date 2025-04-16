@@ -1,5 +1,3 @@
-// app/Auth/SignUp.tsx
-
 import React, { useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -13,30 +11,79 @@ export default function SignUpScreen() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [otp, setOtp] = useState('')
+  const [stage, setStage] = useState<'enter' | 'verify'>('enter')
   const [loading, setLoading] = useState(false)
 
-  const handleSignUp = async () => {
+  const handleSendOtp = async () => {
     if (!email || !password) {
-      Alert.alert('Missing Fields', 'Please enter both email and password.')
+      Alert.alert('Missing Info', 'Please enter both email and password.')
       return
     }
 
     try {
       setLoading(true)
-      const { data, error } = await supabase.auth.signUp({
+
+      const { error } = await supabase.auth.signInWithOtp({
         email,
-        password,
+        options: {
+          shouldCreateUser: true,
+        },
       })
 
       if (error) {
-        Alert.alert('Sign Up Error', error.message)
-      } else if (data.session) {
-        Alert.alert('Success', 'Check your email to confirm your account.')
-        router.replace('/(auth)/SignIn')
+        console.error('🔴 OTP send error:', error)
+        Alert.alert('Error', error.message)
+        return
       }
-    } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.')
-      console.error(error)
+
+      Alert.alert('Code Sent', 'Check your Mailtrap inbox for a 6-digit code.')
+      setStage('verify')
+    } catch (err) {
+      console.error('🔴 OTP error:', err)
+      Alert.alert('Unexpected Error', 'Try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerifyOtp = async () => {
+    if (!otp) {
+      Alert.alert('Missing Code', 'Please enter the 6-digit code.')
+      return
+    }
+
+    try {
+      setLoading(true)
+
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: 'email',
+      })
+
+      if (error) {
+        console.error('🔴 OTP verify error:', error)
+        Alert.alert('Verification Failed', error.message)
+        return
+      }
+
+      // ✅ Set the password now that OTP is confirmed
+      const { error: pwError } = await supabase.auth.updateUser({
+        password,
+      })
+
+      if (pwError) {
+        console.error('🔴 Password update error:', pwError)
+        Alert.alert('Password Error', pwError.message)
+        return
+      }
+
+      Alert.alert('Welcome!', 'Account verified and password set.')
+      router.replace('/(tabs)')
+    } catch (err) {
+      console.error('🔴 General error:', err)
+      Alert.alert('Unexpected Error', 'Try again.')
     } finally {
       setLoading(false)
     }
@@ -44,62 +91,82 @@ export default function SignUpScreen() {
 
   return (
     <Container>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
       >
         <View style={styles.header}>
           <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join us on your journey to better mental fitness</Text>
+          <Text style={styles.subtitle}>Check Mailtrap for your sign-in code</Text>
         </View>
 
         <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <FontAwesome name="envelope" size={20} color={colors.text.secondary} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor={colors.text.secondary}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-              editable={!loading}
-            />
-          </View>
+          {stage === 'enter' ? (
+            <>
+              <View style={styles.inputContainer}>
+                <FontAwesome name="envelope" size={20} color={colors.text.secondary} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor={colors.text.secondary}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  value={email}
+                  onChangeText={setEmail}
+                  editable={!loading}
+                />
+              </View>
 
-          <View style={styles.inputContainer}>
-            <FontAwesome name="lock" size={20} color={colors.text.secondary} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor={colors.text.secondary}
-              secureTextEntry
-              autoCapitalize="none"
-              value={password}
-              onChangeText={setPassword}
-              editable={!loading}
-            />
-          </View>
+              <View style={styles.inputContainer}>
+                <FontAwesome name="lock" size={20} color={colors.text.secondary} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Create Password"
+                  placeholderTextColor={colors.text.secondary}
+                  secureTextEntry
+                  autoCapitalize="none"
+                  value={password}
+                  onChangeText={setPassword}
+                  editable={!loading}
+                />
+              </View>
 
-          <TouchableOpacity 
-            style={[styles.button, loading && styles.buttonDisabled]} 
-            onPress={handleSignUp}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>
-              {loading ? "Creating account..." : "Create Account"}
-            </Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={handleSendOtp}
+                disabled={loading}
+              >
+                <Text style={styles.buttonText}>
+                  {loading ? 'Sending code...' : 'Send Sign-Up Code'}
+                </Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <View style={styles.inputContainer}>
+                <FontAwesome name="key" size={20} color={colors.text.secondary} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter 6-digit code"
+                  placeholderTextColor={colors.text.secondary}
+                  keyboardType="numeric"
+                  value={otp}
+                  onChangeText={setOtp}
+                  editable={!loading}
+                />
+              </View>
 
-          <TouchableOpacity 
-            onPress={() => router.push('/(auth)/SignIn')}
-            style={styles.linkButton}
-          >
-            <Text style={styles.linkText}>
-              Already have an account? <Text style={styles.linkTextBold}>Sign In</Text>
-            </Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={handleVerifyOtp}
+                disabled={loading}
+              >
+                <Text style={styles.buttonText}>
+                  {loading ? 'Verifying...' : 'Verify and Finish'}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </KeyboardAvoidingView>
     </Container>
@@ -162,19 +229,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: typography.fonts.ubuntu.bold,
     fontSize: typography.sizes.body,
-    color: colors.text.primary,
-  },
-  linkButton: {
-    marginTop: 24,
-    alignItems: 'center',
-  },
-  linkText: {
-    fontFamily: typography.fonts.ubuntu.regular,
-    fontSize: typography.sizes.body,
-    color: colors.text.secondary,
-  },
-  linkTextBold: {
-    fontFamily: typography.fonts.ubuntu.bold,
     color: colors.text.primary,
   },
 })
