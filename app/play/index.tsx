@@ -322,17 +322,15 @@ export default function PlayScreen() {
 
   const handleBackPress = async () => {
     await cleanup()
-    router.back()
+    router.replace('/')
   }
 
   return (
     <Container>
       <View style={styles.header}>
-        <Link href="../" asChild>
-          <TouchableOpacity onPress={handleBackPress}>
-            <FontAwesome name="chevron-left" size={24} color={colors.text.primary} />
-          </TouchableOpacity>
-        </Link>
+        <TouchableOpacity onPress={handleBackPress}>
+          <FontAwesome name="chevron-left" size={24} color={colors.text.primary} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
